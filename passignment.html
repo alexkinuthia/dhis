@@ -1,0 +1,294 @@
+ <style type="text/css" media="screen">
++  .blue{
++  color:blue;text-decoration:underline;cursor:pointer;
++  }
+   #main{
+   float:left; height:100%;
+   }
+-  #indicators{
++  #indicators1{
+   position:absolute; left:50%;
+   }
+   #reports{
++  position:absolute;left:20%;
++  }
++  #indicators{
++  position:absolute; right:50%;
++  }
++  #charts{
++  position:absolute;left:50%;
++  }
++  #maps{
++  position:relative; margin-top:154px; left:40px;
++  }
+ </style>
+ <script type="text/javascript">  
++  var id1,id,href,idn;  
++  var data;
++  var  ChartData={};
++  
++   function chartLoad(idn)
++  {    
++    $("#Charts").html("");
++        $.get('../../../api/charts/query/'+'.json', function(json)
++        {       
++      $(json.charts).each(function(i, data)
++      {
++             var chartid=data.id;
++        var charthref=data.href;          
++         $.get(charthref+'.json', function(chart) 
++         {
++           $(chart.indicators).each(function(i, dat)
++          {
++             if(dat.id==idn)
++            {
++               //var append='<p><a href=\''+data.href+'\'>More Details</a></p>';
++                var anchor = $("<img  >").attr("Src",charthref+'/data').append("<br />");
++                $("#Charts").append(anchor);
++               //$("#Charts").append(append);
++            }  
++             else{
++              $("#Charts").html("<p style='color:red;'>no indicators</p>");
++            }
++           });
++        });        
++      });  
++         });
++     }
++   
++   function reports(idn)
++    {
++      $("#reports").html("");
++      $.get("../../../api/reportTables.json",function(map)
++      {
++        $(reports.reportTables).each(function(i, myData)
++        {      
++          $.get("../../../api/reportTables/"+myData.id+".json",function(reportT)
++          {    
++            $(reportT.indicator).each(function(i,mapIndicatorId)
++            {    
++              if(idn==mapIndicatorId.id)
++              {
++                $("#reports").append(data.html);
++              }
++              else{
++                $("#reports").html("<p style='color:red;'>no indicators</p>");
++              }
++            });
++          });
++        });
++      });
++    }
++
++  function printDetails(idn)
++  {
++    $("#maps").html("");
++    $.get("../../../api/mapViews.json",function(map)
++    {
++      $(map.mapViews).each(function(i, myData)
++      {      
++        $.get("../../../api/mapViews/"+myData.id+".json",function(mapRef)
++        {    
++          $(mapRef.indicator).each(function(i,mapIndicatorId)
++          {    
++            if(idn==mapIndicatorId.id)
++            {
++              var image=$("<img >").attr("Src",mapRef.href+'/data').append("<br />"); 
++              $("#maps").append(image);
++            }
++            
++            else{
++              $("#maps").html("<p style='color:red;'>no indicators</p>");
++            }
++          });
++        });
++      });
++    });
++  }
++   
++   function printIt(id)
++  {
++    $("#indicators1").html("");
++      $.get(id+'.json',function(json)
++    { 
++       $(json.indicators).each(function(i, data)
++          {
++             if(data.name=="")
++             {
++               $("#indicators1").html("<p style='color:red;'>no indicators</p>");
++            }
++      idn=data.id;
++      var anchor = $("<a id='"+idn+"'  onclick='javascript:chartLoad(id),printDetails(id),reports(id)' ><a>").append(data.name).append("<br>").append(data.id);
++          $("#indicators1").append(anchor);
++          });
++     });
++  }   
++  
+   $(document).ready(function(){
+         $("#search").keyup(function(){
+             $("#results").html("");
+@@ -14,7 +130,8 @@
+             $.get('../api/indicatorGroups/query/'+$(this).val()+'.json', function(json){
+                 $(json.indicatorGroups).each(function(i, data){
+           theId=data.href;
+-          var id=data.href;
++          id=data.href;
++          id1=data.href;
+                     var anchor = $("<a id='links' onclick='#'></a>").append(data.name);
+           $(anchor).bind('click',{'name':data.name,'id':data.href},function(event){
+             $("#indicators").html("");    
+@@ -27,7 +144,9 @@
+                 $("#indicators").append(append);                                  
+                 });
+               });
+-            });                     
++            });
++            var anchor1 = $("<p class='blue' id='"+id1+"' onclick='javascript:printIt(id)'></p>").append(data.name);
++            $("#results").append(anchor1);
+                         $("#results").append(anchor).append("<br/>");                           
+                         });
+                     });    
+@@ -40,3 +159,7 @@
+ <div id="results"></div>
+ </div>
+ <div id="indicators"></div>
++<div id="indicators1"></div>
++<div id="maps"></div>
++<div id="reports"></div>
++<div id="Charts"></div>
+14 ????? stats/WebContent/search.html View file @ 1aa7b30
+...	...	 @@ -63,8 +63,7 @@
+63	63	         $.get(charthref+'.json', function(chart) {
+64	64	           $(chart.indicators).each(function(i, dat){
+65	65	             if(dat.id==idn){                        
+66	 	 -             var anchor = $("<img  >").attr("Src",charthref+'/data').append("<br />")                                                         
+67	 	 -                                        $("#Charts").append(anchor);
+ 	66	 +             var anchor = $("<img  >").attr("Src",charthref+'/data').append("<br />")$("#Charts").append(anchor);
+68	67	             }          
+69	68	           });
+70	69	          });        
+...	...	 @@ -79,10 +78,13 @@
+79	78	         { 
+80	79	             $(json.indicators).each(function(i, data)
+81	80	                                  {
+82	 	 -                                  if(data.name==""){$("#indicators").html("<p style='color:red;'>no indicators</p>");}
+83	 	 -                    idn=data.id;
+84	 	 -        var anchor = $("<a id='"+idn+"'  onclick='javascript:chartLoad(id),printDetails(id)' ><a>").append(data.name).append("<br>");
+85	 	 -                                        $("#indicators").append(anchor);
+ 	81	 +                                  if(data.name=="")
+ 	82	 +                                  {
+ 	83	 +                                    $("#indicators").html("<p style='color:red;'>no indicators</p>");
+ 	84	 +                                  }
+ 	85	 +                  idn=data.id;
+ 	86	 +                  var anchor = $("<a id='"+idn+"'onclick='javascript:chartLoad(id),printDetails(id)'><a>").append(data.name).append("<br>");
+ 	87	 +                                    $("#indicators").append(anchor);
+86	88	                                  });
+87	89	         });
+88	90	    }   
+105 ????? stats/WebContent/search2.html View file @ 1aa7b30
+...	...	 @@ -0,0 +1,105 @@
+ 	1	 +
+ 	2	 +<style type="text/css" media="screen">
+ 	3	 +.blue{color:blue;text-decoration:underline;cursor:pointer;}
+ 	4	 +/* Put your CSS styling here */
+ 	5	 +</style>
+ 	6	 +<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+ 	7	 +<script type="text/javascript">
+ 	8	 +     var id1,id,href,idn;  
+ 	9	 +  var data;
+ 	10	 +  var  ChartData={};
+ 	11	 +function printDetails(idn)
+ 	12	 +  {
+ 	13	 +    $("#maps").html("");    
+ 	14	 +    $.get("../../../api/mapViews.json",function(map)
+ 	15	 +    {      
+ 	16	 +      $(map.mapViews).each(function(i, myData)
+ 	17	 +      {          
+ 	18	 +        $.get("../../../api/mapViews/"+myData.id+".json",function(mapRef)
+ 	19	 +        {           
+ 	20	 +          $(mapRef.indicator).each(function(i,mapIndicatorId)
+ 	21	 +          {                        
+ 	22	 +            if(idn==mapIndicatorId.id)
+ 	23	 +            {
+ 	24	 +              //$("#maps").append("<img src='"+mapRef.href+"/data'">);
+ 	25	 +              var image=$("<img >").attr("Src",mapRef.href+'/data').append("<br />"); 
+ 	26	 +              $("#maps").append(image);
+ 	27	 +            }            
+ 	28	 +          });
+ 	29	 +        });
+ 	30	 +      });
+ 	31	 +    });
+ 	32	 +  }
+ 	33	 +function chartLoad(idn)
+ 	34	 +  {        
+ 	35	 +    $("#Charts").html("");  
+ 	36	 +  //var addr='http://test.hiskenya.org/api/charts/'+idn+'.json';  
+ 	37	 +      $.get('../../../api/charts/query/'+'.json', function(json) 
+ 	38	 +    {          
+ 	39	 +    $(json.charts).each(function(i, data){
+ 	40	 +                var chartid=data.id;
+ 	41	 +          var charthref=data.href;      
+ 	42	 +       $.get(charthref+'.json', function(chart) {
+ 	43	 +         $(chart.indicators).each(function(i, dat){
+ 	44	 +           if(dat.id==idn)
+ 	45	 +           {
+ 	46	 +             var anchor = $("<img  >").attr("Src",charthref+'/data').append("<br />");  
+ 	47	 +                                        $("#Charts").append(anchor);
+ 	48	 +           }
+ 	49	 +           else
+ 	50	 +             {
+ 	51	 +               $("#Charts").html("<p style='color:red;'>no Charts</p>");
+ 	52	 +             }
+ 	53	 +         });
+ 	54	 +        });        
+ 	55	 +       });                    
+ 	56	 +                        });
+ 	57	 +  }   
+ 	58	 +  function printIt(id)
+ 	59	 +  {
+ 	60	 +    $("#indicators").html("");   
+ 	61	 +       $.get(id+'.json',function(json)
+ 	62	 +       { 
+ 	63	 +           $(json.indicators).each(function(i, data)
+ 	64	 +                                {
+ 	65	 +                                  if(data.name==""){$("#indicators").html("<p style='color:red;'>no indicators</p>");}
+ 	66	 +                    idn=data.id;
+ 	67	 +                    //idn=data.href;
+ 	68	 +                     var anchor = $("<a id='"+idn+"'  onclick='javascript:chartLoad(id),printDetails(id)' ></a>").append(data.name).append("<br />"); 
+ 	69	 +                    $("#indicators").append(anchor);
+ 	70	 +                                });
+ 	71	 +       });
+ 	72	 +  }   
+ 	73	 +        $(document).ready(function(){                      
+ 	74	 +                $("#search").keyup(function(){  
+ 	75	 +                        $("#results").html("");              
+ 	76	 +                        $("#indicators").html("");
+ 	77	 +                    $.get('../../../api/indicatorGroups/query/'+$(this).val()+'.json', function(json)
+ 	78	 +                        {
+ 	79	 +                                $(json.indicatorGroups).each(function(i, data)
+ 	80	 +                                {                  
+ 	81	 +                                  id1=data.href;                                            
+ 	82	 +                                        var anchor = $("<p class='blue' id='"+id1+"' onclick='javascript:printIt(id)'></p>").append(data.name);                                       
+ 	83	 +                                        $("#results").append(anchor);                                                            
+ 	84	 +                                });
+ 	85	 +                        });                        
+ 	86	 +                });                
+ 	87	 +        });
+ 	88	 +</script>
+ 	89	 +
+ 	90	 +<h1>Search</h1>
+ 	91	 +<div style="float:left;height:auto;">
+ 	92	 +<label for="search">Search Criteria</label>
+ 	93	 +<input type="text" id="search" class="search" />
+ 	94	 +<div id="results"></div>
+ 	95	 +
+ 	96	 +</div>
+ 	97	 +
+ 	98	 +<div id="indicators" style="position:absolute;left:20%; cursor:pointer">
+ 	99	 +
+ 	100	 +</div>
+ 	101	 +<div id="Charts" style="position:absolute;left:50%; cursor:pointer">
+ 	102	 +
+ 	103	 +</div>
+ 	104	 +</div>
+ 	105	 +<div id="maps" style="position:relative; margin-top:154px; left:40px;"></div>
